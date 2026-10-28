@@ -75,6 +75,16 @@ Results include every pair, weak matches included. Ties are broken by skill poin
 
 ## SQL Detective
 
+Run every answer with one command (needs `psql`; uses `DATABASE_URL` or the default above):
+
+```bash
+./scripts/sql_detective.sh
+# or against the Docker database:
+PSQL="docker compose exec -T db psql -U postgres -d recruiter_bot" ./scripts/sql_detective.sh
+```
+
+The script loads the dataset into a temporary schema inside a transaction, prints each query with its result, and rolls back, so it leaves nothing behind and can be run any number of times.
+
 `sql/hiring_ops_setup.sql` recreates the four tables and inserts the hiring-ops data exactly as supplied, including nullable values. Run it in an empty PostgreSQL database, then run `sql/sql_detective.sql`. Question 3 normalizes email case and surrounding whitespace to identify the two Ananya Rao records as one person; it counts distinct postings reached in the interview data. Because `applicants` has no posting column, "applied to a posting" is inferred from `interviews`. Question 4 rounds the conversion rate to two decimals. The bonus query uses `ROW_NUMBER()`, so it returns exactly one recruiter per department; it includes departments with zero successful placements and breaks ties by recruiter ID.
 
 ## What I would do next
@@ -85,4 +95,15 @@ Results include every pair, weak matches included. Ties are broken by skill poin
 
 ## AI tools
 
-I used ChatGPT to help inspect the assignment and draft the implementation. I reviewed the seed values, scoring rules, SQL interpretations, and tests against the brief and verified them locally.
+I used two AI tools, at different stages.
+
+**ChatGPT (first draft).** I used it to read through the assignment and draft the initial implementation: the FastAPI skeleton, the first schema, the seed script, and the SQL Detective queries.
+
+**Claude Code (review, fixes and extensions).** I then used Claude Code in my editor to review the project against the brief and finish it:
+
+- **Finding a real bug.** It found that I had rewritten `sql/schema.sql` into the normalized design but never updated `app/seed.py` or `app/repository.py`. A fresh seed would have failed; the API only worked because my local database still had the old tables. My unit tests used fakes, so none of them caught it.
+- **Decisions I made.** It asked before choosing direction. I chose to keep the normalized schema rather than revert, and to add culture and availability as small, secondary signals. It proposed the specific weights (60/25/10/5), the tie-break order, and ranking "not looking" candidates lower instead of hiding them. I checked the resulting rankings by hand against the seed data, for example Sherlock first for Backend Detective and Olivia ahead of Katniss for Incident Commander, before accepting them.
+- **Code it wrote.** It made the schema and seed changes, rewrote the repository queries, and updated the matching algorithm. It also wrote the POST endpoints, the `limit`/`min_score` filters, `docker-compose.yml`, `scripts/sql_detective.sh` and `docs/HOW_IT_WORKS.md`.
+- **Tests and checks.** It added the integration tests that run against a real PostgreSQL database, the tests that would have caught the schema bug. It also ran a clean install in a separate folder, which showed that `httpx` was missing from `requirements-dev.txt`. For SQL Detective it only made small fixes: rounding, and correcting comments. It ran the original answers against the dataset to confirm them.
+
+All the SQL is still handwritten, and nothing goes through an ORM or query builder. I have read through every file and can explain how each part works and why it was built that way.
