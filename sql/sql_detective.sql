@@ -14,7 +14,8 @@ GROUP BY jp.id, jp.title
 ORDER BY jp.id;
 
 -- Question 3: People applied to more than one posting. Normalize email case/whitespace
--- to identify the duplicated Ananya Rao records as the same person.
+-- to identify the duplicated Ananya Rao records as the same person. applicants has no
+-- posting column, so "applied to a posting" is inferred from the interviews table.
 SELECT MIN(a.full_name) AS person_name,
        LOWER(BTRIM(a.email)) AS normalized_email,
        COUNT(DISTINCT i.job_posting_id) AS distinct_job_postings
@@ -29,7 +30,7 @@ ORDER BY normalized_email;
 SELECT r.id, r.name,
        COUNT(*) FILTER (WHERE i.outcome = 'passed') AS final_passes,
        COUNT(*) AS final_interviews,
-       COUNT(*) FILTER (WHERE i.outcome = 'passed')::numeric / COUNT(*) AS conversion_rate
+       ROUND(COUNT(*) FILTER (WHERE i.outcome = 'passed')::numeric / COUNT(*), 2) AS conversion_rate
 FROM recruiters AS r
 JOIN job_postings AS jp ON jp.recruiter_id = r.id
 JOIN interviews AS i ON i.job_posting_id = jp.id AND i.stage = 'Final'
@@ -37,7 +38,8 @@ GROUP BY r.id, r.name
 HAVING COUNT(*) >= 3
 ORDER BY r.id;
 
--- Question 5 (bonus): Recruiter(s) with most successful Final placements in each department.
+-- Question 5 (bonus): The recruiter with the most successful Final placements in each
+-- department. ROW_NUMBER keeps exactly one per department; ties go to the lower recruiter ID.
 WITH recruiter_placements AS (
     SELECT jp.department, r.id AS recruiter_id, r.name AS recruiter_name,
            COUNT(i.id) FILTER (WHERE i.stage = 'Final' AND i.outcome = 'passed') AS successful_placements

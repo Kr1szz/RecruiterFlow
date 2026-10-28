@@ -1,5 +1,11 @@
-CREATE TABLE IF NOT EXISTS candidates (
-    id INTEGER PRIMARY KEY,
+-- Recruiter Bot schema. Seeding rebuilds it from scratch, so drop everything first
+-- (including tables from an earlier, denormalized version of this schema).
+DROP TABLE IF EXISTS job_required_skills, job_culture_keywords,
+    candidate_skills, job_skills, candidate_traits, job_culture,
+    skills, traits, candidates, jobs CASCADE;
+
+CREATE TABLE candidates (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     experience_years INTEGER NOT NULL CHECK (experience_years >= 0),
     availability TEXT NOT NULL
@@ -7,24 +13,26 @@ CREATE TABLE IF NOT EXISTS candidates (
     quirk TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS jobs (
-    id INTEGER PRIMARY KEY,
+CREATE TABLE jobs (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     title TEXT NOT NULL UNIQUE,
     min_experience INTEGER NOT NULL CHECK (min_experience >= 0),
     tagline TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS skills (
-    id INTEGER PRIMARY KEY,
+CREATE TABLE skills (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name TEXT NOT NULL UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS traits (
-    id INTEGER PRIMARY KEY,
+-- One vocabulary for both candidate traits and job culture keywords, so culture
+-- fit is a plain join on trait_id.
+CREATE TABLE traits (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name TEXT NOT NULL UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS candidate_skills (
+CREATE TABLE candidate_skills (
     candidate_id INTEGER NOT NULL
         REFERENCES candidates(id) ON DELETE CASCADE,
     skill_id INTEGER NOT NULL
@@ -32,7 +40,7 @@ CREATE TABLE IF NOT EXISTS candidate_skills (
     PRIMARY KEY (candidate_id, skill_id)
 );
 
-CREATE TABLE IF NOT EXISTS job_skills (
+CREATE TABLE job_skills (
     job_id INTEGER NOT NULL
         REFERENCES jobs(id) ON DELETE CASCADE,
     skill_id INTEGER NOT NULL
@@ -40,7 +48,7 @@ CREATE TABLE IF NOT EXISTS job_skills (
     PRIMARY KEY (job_id, skill_id)
 );
 
-CREATE TABLE IF NOT EXISTS candidate_traits (
+CREATE TABLE candidate_traits (
     candidate_id INTEGER NOT NULL
         REFERENCES candidates(id) ON DELETE CASCADE,
     trait_id INTEGER NOT NULL
@@ -48,7 +56,7 @@ CREATE TABLE IF NOT EXISTS candidate_traits (
     PRIMARY KEY (candidate_id, trait_id)
 );
 
-CREATE TABLE IF NOT EXISTS job_culture (
+CREATE TABLE job_culture (
     job_id INTEGER NOT NULL
         REFERENCES jobs(id) ON DELETE CASCADE,
     trait_id INTEGER NOT NULL
@@ -56,14 +64,7 @@ CREATE TABLE IF NOT EXISTS job_culture (
     PRIMARY KEY (job_id, trait_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_candidate_skills_skill_id
-    ON candidate_skills(skill_id);
-
-CREATE INDEX IF NOT EXISTS idx_job_skills_skill_id
-    ON job_skills(skill_id);
-
-CREATE INDEX IF NOT EXISTS idx_candidate_traits_trait_id
-    ON candidate_traits(trait_id);
-
-CREATE INDEX IF NOT EXISTS idx_job_culture_trait_id
-    ON job_culture(trait_id);
+CREATE INDEX idx_candidate_skills_skill_id ON candidate_skills(skill_id);
+CREATE INDEX idx_job_skills_skill_id ON job_skills(skill_id);
+CREATE INDEX idx_candidate_traits_trait_id ON candidate_traits(trait_id);
+CREATE INDEX idx_job_culture_trait_id ON job_culture(trait_id);

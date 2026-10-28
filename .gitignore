@@ -1,5 +1,31 @@
+# Python
 .venv/
+venv/
 __pycache__/
-.pytest_cache/
 *.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Tooling caches and reports
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local configuration and secrets
 .env
+.env.*
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Logs
+*.log
+
+# Assignment brief (kept locally, not published)
+docs/Recruiterflow_Internship_Assignments.pdf
