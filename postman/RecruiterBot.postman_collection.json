@@ -1,0 +1,584 @@
+{
+  "info": {
+    "name": "Recruiter Bot",
+    "description": "Requests for the Recruiter Bot API, with test assertions on every request.\n\n**Before running:** start the API (`uvicorn app.main:app`) against a database seeded with `python -m app.seed`. Set `baseUrl` if the API is not on `http://localhost:8000`.\n\nRun the whole collection in order (Collection → Run) or from the command line:\n\n```\nnpx newman run postman/RecruiterBot.postman_collection.json\n```\n\nThe *Ingestion* requests create a candidate and a job with unique names on each run, so the collection can be re-run without reseeding. Reseed to remove them.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "jobId",
+      "value": "1",
+      "description": "Backend Detective in the seed data"
+    },
+    {
+      "key": "candidateId",
+      "value": "1",
+      "description": "Sherlock H. in the seed data"
+    },
+    {
+      "key": "newCandidateName",
+      "value": ""
+    },
+    {
+      "key": "newCandidateId",
+      "value": ""
+    },
+    {
+      "key": "newJobTitle",
+      "value": ""
+    },
+    {
+      "key": "newJobId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Matching",
+      "description": "The two required endpoints, plus the optional filters.",
+      "item": [
+        {
+          "name": "Ranked candidates for a job",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('every match has a 0-100 score, a reason and a breakdown', () => {",
+                  "    body.matches.forEach(m => {",
+                  "        pm.expect(m.score).to.be.within(0, 100);",
+                  "        pm.expect(m.reason).to.be.a('string').and.not.empty;",
+                  "        pm.expect(m.breakdown).to.have.keys('skills', 'experience', 'culture', 'availability');",
+                  "        pm.expect(m).to.have.property('name');",
+                  "    });",
+                  "});",
+                  "pm.test('matches are ranked by score, highest first', () => {",
+                  "    const scores = body.matches.map(m => m.score);",
+                  "    pm.expect(scores).to.eql([...scores].sort((a, b) => b - a));",
+                  "});",
+                  "pm.test('all 15 seeded candidates are ranked', () => pm.expect(body.matches.length).to.be.at.least(15));",
+                  "pm.test('Sherlock H. is the best Backend Detective', () => pm.expect(body.matches[0].name).to.eql('Sherlock H.'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/jobs/{{jobId}}/matches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "{{jobId}}",
+                "matches"
+              ]
+            },
+            "description": "Every candidate ranked for one job, with a score from 0 to 100, a reason, and the points from each signal (skills 60, experience 25, culture 10, availability 5)."
+          }
+        },
+        {
+          "name": "Ranked jobs for a candidate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('every match has a 0-100 score, a reason and a breakdown', () => {",
+                  "    body.matches.forEach(m => {",
+                  "        pm.expect(m.score).to.be.within(0, 100);",
+                  "        pm.expect(m.reason).to.be.a('string').and.not.empty;",
+                  "        pm.expect(m.breakdown).to.have.keys('skills', 'experience', 'culture', 'availability');",
+                  "        pm.expect(m).to.have.property('title');",
+                  "    });",
+                  "});",
+                  "pm.test('matches are ranked by score, highest first', () => {",
+                  "    const scores = body.matches.map(m => m.score);",
+                  "    pm.expect(scores).to.eql([...scores].sort((a, b) => b - a));",
+                  "});",
+                  "pm.test('all 6 seeded jobs are ranked', () => pm.expect(body.matches.length).to.be.at.least(6));",
+                  "pm.test('Backend Detective is Sherlock\\'s best job', () => pm.expect(body.matches[0].title).to.eql('Backend Detective'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/candidates/{{candidateId}}/matches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "candidates",
+                "{{candidateId}}",
+                "matches"
+              ]
+            },
+            "description": "The reverse direction: every job ranked for one candidate."
+          }
+        },
+        {
+          "name": "Top matches only (limit + min_score)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('every match has a 0-100 score, a reason and a breakdown', () => {",
+                  "    body.matches.forEach(m => {",
+                  "        pm.expect(m.score).to.be.within(0, 100);",
+                  "        pm.expect(m.reason).to.be.a('string').and.not.empty;",
+                  "        pm.expect(m.breakdown).to.have.keys('skills', 'experience', 'culture', 'availability');",
+                  "        pm.expect(m).to.have.property('name');",
+                  "    });",
+                  "});",
+                  "pm.test('matches are ranked by score, highest first', () => {",
+                  "    const scores = body.matches.map(m => m.score);",
+                  "    pm.expect(scores).to.eql([...scores].sort((a, b) => b - a));",
+                  "});",
+                  "pm.test('at most 3 matches, all scoring 50 or more', () => {",
+                  "    pm.expect(body.matches.length).to.be.at.most(3);",
+                  "    body.matches.forEach(m => pm.expect(m.score).to.be.at.least(50));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/jobs/{{jobId}}/matches?limit=3&min_score=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "{{jobId}}",
+                "matches"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "3"
+                },
+                {
+                  "key": "min_score",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "Optional query parameters: `limit` keeps the first N matches, `min_score` drops matches scoring below it."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ingestion",
+      "description": "Add candidates and jobs over the API. Skill and trait names are trimmed, lowercased and de-duplicated.",
+      "item": [
+        {
+          "name": "Create a candidate",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('newCandidateName', `Hercule P. ${Date.now()}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('skills are lowercased and de-duplicated', () => pm.expect(body.skills).to.eql(['deduction', 'forensics']));",
+                  "pm.collectionVariables.set('newCandidateId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{newCandidateName}}\",\n  \"skills\": [\n    \"Deduction\",\n    \"forensics\",\n    \"deduction\"\n  ],\n  \"experience_years\": 30,\n  \"availability\": \"immediate\",\n  \"traits\": [\n    \"analytical\",\n    \"autonomous\"\n  ],\n  \"quirk\": \"Little grey cells.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/candidates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "candidates"
+              ]
+            },
+            "description": "Creates a candidate and returns it with its new `id` (201). The name gets a timestamp so the request can be re-run."
+          }
+        },
+        {
+          "name": "Matches for the new candidate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('every match has a 0-100 score, a reason and a breakdown', () => {",
+                  "    body.matches.forEach(m => {",
+                  "        pm.expect(m.score).to.be.within(0, 100);",
+                  "        pm.expect(m.reason).to.be.a('string').and.not.empty;",
+                  "        pm.expect(m.breakdown).to.have.keys('skills', 'experience', 'culture', 'availability');",
+                  "        pm.expect(m).to.have.property('title');",
+                  "    });",
+                  "});",
+                  "pm.test('matches are ranked by score, highest first', () => {",
+                  "    const scores = body.matches.map(m => m.score);",
+                  "    pm.expect(scores).to.eql([...scores].sort((a, b) => b - a));",
+                  "});",
+                  "pm.test('Backend Detective ranks first', () => pm.expect(body.matches[0].title).to.eql('Backend Detective'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/candidates/{{newCandidateId}}/matches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "candidates",
+                "{{newCandidateId}}",
+                "matches"
+              ]
+            },
+            "description": "The new candidate is ranked straight away."
+          }
+        },
+        {
+          "name": "Create a job",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('newJobTitle', `Chief Chemist ${Date.now()}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('newJobId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"{{newJobTitle}}\",\n  \"required_skills\": [\n    \"chemistry\"\n  ],\n  \"min_experience\": 5,\n  \"culture\": [\n    \"reckless\"\n  ],\n  \"tagline\": \"Mind the fumes.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/jobs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs"
+              ]
+            },
+            "description": "Creates a job and returns it with its new `id` (201). The title gets a timestamp so the request can be re-run."
+          }
+        },
+        {
+          "name": "Matches for the new job",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('every match has a 0-100 score, a reason and a breakdown', () => {",
+                  "    body.matches.forEach(m => {",
+                  "        pm.expect(m.score).to.be.within(0, 100);",
+                  "        pm.expect(m.reason).to.be.a('string').and.not.empty;",
+                  "        pm.expect(m.breakdown).to.have.keys('skills', 'experience', 'culture', 'availability');",
+                  "        pm.expect(m).to.have.property('name');",
+                  "    });",
+                  "});",
+                  "pm.test('matches are ranked by score, highest first', () => {",
+                  "    const scores = body.matches.map(m => m.score);",
+                  "    pm.expect(scores).to.eql([...scores].sort((a, b) => b - a));",
+                  "});",
+                  "pm.test('Rick S. ranks first', () => pm.expect(body.matches[0].name).to.eql('Rick S.'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/jobs/{{newJobId}}/matches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "{{newJobId}}",
+                "matches"
+              ]
+            },
+            "description": "Existing candidates are ranked against the new job."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Errors",
+      "description": "How the API responds to unknown IDs, duplicates and invalid input.",
+      "item": [
+        {
+          "name": "Unknown job (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/jobs/999999/matches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "999999",
+                "matches"
+              ]
+            },
+            "description": "A job ID that doesn't exist."
+          }
+        },
+        {
+          "name": "Unknown candidate (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/candidates/999999/matches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "candidates",
+                "999999",
+                "matches"
+              ]
+            },
+            "description": "A candidate ID that doesn't exist."
+          }
+        },
+        {
+          "name": "Duplicate candidate (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{newCandidateName}}\",\n  \"skills\": [\n    \"deduction\"\n  ],\n  \"experience_years\": 1,\n  \"availability\": \"immediate\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/candidates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "candidates"
+              ]
+            },
+            "description": "Re-uses the name from *Create a candidate*; names are unique. Run the Ingestion folder first."
+          }
+        },
+        {
+          "name": "Invalid candidate (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 422', () => pm.response.to.have.status(422));",
+                  "pm.test('each invalid field is reported', () => {",
+                  "    const fields = pm.response.json().detail.map(e => e.loc[1]);",
+                  "    pm.expect(fields).to.include.members(['skills', 'experience_years', 'availability']);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nobody\",\n  \"skills\": [\n    \" \"\n  ],\n  \"experience_years\": -1,\n  \"availability\": \"someday\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/candidates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "candidates"
+              ]
+            },
+            "description": "Negative years, an unknown availability value and a blank skill are all rejected before reaching the database."
+          }
+        },
+        {
+          "name": "Invalid filter (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/jobs/{{jobId}}/matches?limit=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "{{jobId}}",
+                "matches"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "`limit` must be at least 1."
+          }
+        }
+      ]
+    }
+  ]
+}

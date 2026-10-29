@@ -1,0 +1,3 @@
+$kind: collection
+description: The two required endpoints, plus the optional filters.
+order: 1000

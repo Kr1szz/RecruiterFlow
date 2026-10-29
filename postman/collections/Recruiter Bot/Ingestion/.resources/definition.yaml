@@ -1,0 +1,3 @@
+$kind: collection
+description: Add candidates and jobs over the API. Skill and trait names are trimmed, lowercased and de-duplicated.
+order: 2000

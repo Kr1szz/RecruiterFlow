@@ -1,0 +1,25 @@
+$kind: http-request
+description: "The reverse direction: every job ranked for one candidate."
+url: "{{baseUrl}}/candidates/{{candidateId}}/matches"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.test('every match has a 0-100 score, a reason and a breakdown', () => {
+          body.matches.forEach(m => {
+              pm.expect(m.score).to.be.within(0, 100);
+              pm.expect(m.reason).to.be.a('string').and.not.empty;
+              pm.expect(m.breakdown).to.have.keys('skills', 'experience', 'culture', 'availability');
+              pm.expect(m).to.have.property('title');
+          });
+      });
+      pm.test('matches are ranked by score, highest first', () => {
+          const scores = body.matches.map(m => m.score);
+          pm.expect(scores).to.eql([...scores].sort((a, b) => b - a));
+      });
+      pm.test('all 6 seeded jobs are ranked', () => pm.expect(body.matches.length).to.be.at.least(6));
+      pm.test('Backend Detective is Sherlock\'s best job', () => pm.expect(body.matches[0].title).to.eql('Backend Detective'));
+    language: text/javascript
+order: 2000
