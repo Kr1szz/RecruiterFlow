@@ -89,3 +89,11 @@ def test_create_candidate_rejects_invalid_body(client):
     invalid_fields = {error["loc"][-1] for error in response.json()["detail"]}
     assert {"experience_years", "availability"} <= invalid_fields
     assert any("skills" in error["loc"] for error in response.json()["detail"])
+
+
+def test_blank_name_and_title_are_rejected(client):
+    candidate = {"name": "   ", "skills": ["x"], "experience_years": 1, "availability": "immediate"}
+    job = {"title": "   ", "required_skills": ["x"], "min_experience": 0}
+
+    assert client.post("/candidates", json=candidate).status_code == 422
+    assert client.post("/jobs", json=job).status_code == 422

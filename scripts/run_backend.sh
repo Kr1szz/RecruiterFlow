@@ -123,4 +123,4 @@ fi
 
 # 4. API
 step "Starting API on http://$HOST:$PORT  (docs: http://$HOST:$PORT/docs, stop with Ctrl+C)"
-exec .venv/bin/uvicorn app.main:app --host "$HOST" --port "$PORT" "${UVICORN_ARGS[@]}"
+exec .venv/bin/uvicorn app.main:app --host "$HOST" --port "$PORT" ${UVICORN_ARGS[@]+"${UVICORN_ARGS[@]}"}

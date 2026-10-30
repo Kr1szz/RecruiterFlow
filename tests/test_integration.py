@@ -20,7 +20,8 @@ def client():
     except psycopg.OperationalError:
         pytest.skip("PostgreSQL is not reachable at DATABASE_URL")
     seed()
-    return TestClient(app)
+    yield TestClient(app)
+    seed()  # leave the seed data as it was, without the rows these tests create
 
 
 def test_job_matches_rank_every_candidate(client):
@@ -68,6 +69,7 @@ def test_created_candidate_is_normalized_and_matched(client):
     assert response.status_code == 201
     created = response.json()
     assert created["skills"] == ["deduction", "forensics"]
+    assert created["quirk"] == "Little grey cells."
     matches = client.get(f"/candidates/{created['id']}/matches").json()["matches"]
     assert matches[0]["title"] == "Backend Detective"
 
@@ -86,10 +88,12 @@ def test_created_job_ranks_existing_candidates(client):
             "required_skills": ["chemistry"],
             "min_experience": 5,
             "culture": ["reckless"],
+            "tagline": "Mind the fumes.",
         },
     )
 
     assert response.status_code == 201
+    assert response.json()["tagline"] == "Mind the fumes."
     matches = client.get(f"/jobs/{response.json()['id']}/matches").json()["matches"]
     assert matches[0]["name"] == "Rick S."
     assert client.post("/jobs", json={"title": "Chief Chemist", "required_skills": ["x"], "min_experience": 0}).status_code == 409

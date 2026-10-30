@@ -49,6 +49,8 @@ def _normalize_names(values: list[str]) -> list[str]:
 
 
 class CandidateIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     name: str = Field(min_length=1, max_length=100)
     skills: list[str] = Field(min_length=1)
     experience_years: int = Field(ge=0, le=80)
@@ -60,6 +62,8 @@ class CandidateIn(BaseModel):
 
 
 class JobIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     title: str = Field(min_length=1, max_length=100)
     required_skills: list[str] = Field(min_length=1)
     min_experience: int = Field(ge=0, le=80)
@@ -76,6 +80,7 @@ class CandidateOut(BaseModel):
     availability: str
     skills: list[str]
     traits: list[str]
+    quirk: str
 
 
 class JobOut(BaseModel):
@@ -84,3 +89,4 @@ class JobOut(BaseModel):
     min_experience: int
     required_skills: list[str]
     culture: list[str]
+    tagline: str

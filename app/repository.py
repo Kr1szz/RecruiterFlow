@@ -4,7 +4,7 @@ from typing import Any
 import psycopg
 
 CANDIDATE_SELECT = """
-    SELECT c.id, c.name, c.experience_years, c.availability,
+    SELECT c.id, c.name, c.experience_years, c.availability, c.quirk,
            ARRAY(SELECT s.name FROM candidate_skills AS cs
                  JOIN skills AS s ON s.id = cs.skill_id
                  WHERE cs.candidate_id = c.id ORDER BY s.name) AS skills,
@@ -14,7 +14,7 @@ CANDIDATE_SELECT = """
     FROM candidates AS c"""
 
 JOB_SELECT = """
-    SELECT j.id, j.title, j.min_experience,
+    SELECT j.id, j.title, j.min_experience, j.tagline,
            ARRAY(SELECT s.name FROM job_skills AS js
                  JOIN skills AS s ON s.id = js.skill_id
                  WHERE js.job_id = j.id ORDER BY s.name) AS required_skills,
