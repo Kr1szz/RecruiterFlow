@@ -4,6 +4,18 @@ FastAPI backend that ranks fictional candidates against jobs, plus the separate 
 
 For a walkthrough of the data model, request flows and scoring, see [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md).
 
+## Project layout
+
+```
+app/        FastAPI routes, schemas, matching algorithm, handwritten queries, seed
+data/       The 15 candidates and 6 jobs from the assignment
+docs/       Walkthrough of the data model, request flows and scoring
+postman/    Postman collection covering every endpoint
+scripts/    One-command runners for the API and the SQL Detective answers
+sql/        App schema, plus the hiring-ops dataset and SQL Detective answers
+tests/      Unit, API and integration tests
+```
+
 ## Setup and run
 
 Requirements: Python 3.11+ and either Docker or PostgreSQL 15+.
@@ -56,7 +68,7 @@ Both match endpoints accept optional `limit` (keep the first N) and `min_score` 
 curl http://localhost:8000/jobs/1/matches
 curl 'http://localhost:8000/candidates/1/matches?limit=3&min_score=50'
 
-# Add a candidate or a job (skills/traits are lowercased and de-duplicated)
+# Add a candidate or a job (names are trimmed; skills/traits are also lowercased and de-duplicated)
 curl -X POST http://localhost:8000/candidates -H 'Content-Type: application/json' \
   -d '{"name": "Hercule P.", "skills": ["deduction", "forensics"], "experience_years": 30,
        "availability": "immediate", "traits": ["analytical"], "quirk": "Little grey cells."}'
@@ -181,5 +193,11 @@ I used two AI tools, at different stages.
   - **Clean install:** it ran one in a separate folder, which showed that `httpx` was missing from `requirements-dev.txt`.
   - **Startup race:** testing `run_backend.sh` against a fresh Docker database exposed one, and it fixed it.
   - **SQL Detective:** it ran the original answers against the dataset to confirm them, then made only small fixes (rounding, and correcting comments).
+- **Final pass before submitting.** It checked the repo against the brief again and made small fixes:
+  - **Startup:** `run_backend.sh` no longer crashes on the older Bash that macOS ships by default.
+  - **Validation:** names and titles are trimmed, so blank values are rejected and padded duplicates return 409.
+  - **POST responses:** they now include `quirk` and `tagline`.
+  - **Integration tests:** they reseed when they finish, so they no longer leave test rows behind.
+  - **Clean-up:** it removed an empty Bruno collection and duplicate Postman files, and gave the match schemas clearer names.
 
 All the SQL is still handwritten, and nothing goes through an ORM or query builder. I have read through every file and can explain how each part works and why it was built that way.
