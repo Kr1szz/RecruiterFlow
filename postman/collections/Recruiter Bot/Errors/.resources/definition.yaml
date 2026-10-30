@@ -1,3 +1,0 @@
-$kind: collection
-description: How the API responds to unknown IDs, duplicates and invalid input.
-order: 3000
