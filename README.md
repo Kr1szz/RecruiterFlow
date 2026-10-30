@@ -98,7 +98,7 @@ pytest
 | `tests/test_api.py` | Routes, status codes, validation (fake repository) | Not needed |
 | `tests/test_integration.py` | Schema, seed, real SQL and endpoints end to end | Uses `DATABASE_URL`; skipped if unreachable |
 
-**The integration tests rebuild the database at `DATABASE_URL`**, so point them at a scratch database if you care about its contents.
+**The integration tests rebuild the database at `DATABASE_URL`** and reseed it when they finish, so point them at a scratch database if you care about its contents.
 
 ## Schema
 

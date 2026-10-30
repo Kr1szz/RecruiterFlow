@@ -1,4 +1,4 @@
-"""Rebuild the Recruiter Bot schema and load the PDF's candidate/job seed data."""
+"""Rebuild the Recruiter Bot schema and load the assignment's candidate and job data."""
 
 import json
 from pathlib import Path

@@ -10,9 +10,7 @@ class ScoreBreakdown(BaseModel):
     availability: float = Field(ge=0)
 
 
-class JobCandidateMatch(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class CandidateMatch(BaseModel):
     id: int
     name: str
     score: float = Field(ge=0, le=100)
@@ -20,9 +18,7 @@ class JobCandidateMatch(BaseModel):
     breakdown: ScoreBreakdown
 
 
-class JobMatchItem(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class JobMatch(BaseModel):
     id: int
     title: str
     score: float = Field(ge=0, le=100)
@@ -32,12 +28,12 @@ class JobMatchItem(BaseModel):
 
 class JobMatchesResponse(BaseModel):
     subject_id: int
-    matches: list[JobCandidateMatch]
+    matches: list[CandidateMatch]
 
 
 class CandidateMatchesResponse(BaseModel):
     subject_id: int
-    matches: list[JobMatchItem]
+    matches: list[JobMatch]
 
 
 def _normalize_names(values: list[str]) -> list[str]:

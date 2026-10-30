@@ -38,7 +38,7 @@ GROUP BY r.id, r.name
 HAVING COUNT(*) >= 3
 ORDER BY r.id;
 
--- Question 5  The recruiter with the most successful Final placements in each
+-- Question 5: The recruiter with the most successful Final placements in each
 -- department. ROW_NUMBER keeps exactly one per department; ties go to the lower recruiter ID.
 WITH recruiter_placements AS (
     SELECT jp.department, r.id AS recruiter_id, r.name AS recruiter_name,

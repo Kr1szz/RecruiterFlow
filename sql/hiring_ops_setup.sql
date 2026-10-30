@@ -1,4 +1,4 @@
--- Hiring Ops dataset from the assignment PDF. Kept as supplied, including nullable fields.
+-- Hiring Ops dataset from the assignment. Kept as supplied, including nullable fields.
 CREATE TABLE recruiters (
   id INT PRIMARY KEY,
   name VARCHAR(100),

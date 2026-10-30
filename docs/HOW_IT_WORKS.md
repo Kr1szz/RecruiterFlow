@@ -9,7 +9,7 @@ Recruiter Bot is a small FastAPI service backed by PostgreSQL. It stores candida
 ```mermaid
 flowchart LR
     seed["data/seed_data.json"] -->|python -m app.seed| repo
-    client["HTTP client<br/>(curl, Bruno, /docs)"] -->|GET / POST| routes["app/routes.py"]
+    client["HTTP client<br/>(curl, Postman, /docs)"] -->|GET / POST| routes["app/routes.py"]
     routes --> repo["app/repository.py<br/>handwritten SQL"]
     repo <--> db[("PostgreSQL")]
     routes --> matching["app/matching.py<br/>pure Python scoring"]
@@ -35,6 +35,8 @@ Two rules shape the code:
 | `data/seed_data.json` | The 15 candidates and 6 jobs from the assignment. |
 | `sql/hiring_ops_setup.sql`, `sql/sql_detective.sql` | Part 2 of the assignment, independent of the app. |
 | `tests/` | Unit, API and integration tests. |
+| `scripts/` | One-command runners for the API and the SQL Detective answers. |
+| `postman/` | Postman collection covering every endpoint. |
 | `docker-compose.yml` | Optional local PostgreSQL. |
 
 ## Data model
@@ -211,4 +213,4 @@ Three layers, run with `pytest`:
 | `tests/test_api.py` | Routes, status codes and validation, using a fake repository | No |
 | `tests/test_integration.py` | Schema, seed, real SQL and endpoints end to end | Yes; skipped if PostgreSQL isn't reachable |
 
-The integration tests **rebuild the database** at `DATABASE_URL`, so point them at one you don't mind resetting.
+The integration tests **rebuild the database** at `DATABASE_URL` and reseed it when they finish, so point them at one you don't mind resetting.
